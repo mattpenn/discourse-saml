@@ -133,10 +133,14 @@ class SamlAuthenticator < ::Auth::OAuth2Authenticator
       result.skip_email_validation = true
     end
 
-    if GlobalSetting.try(:saml_validate_email_fields).present? && attributes['memberOf'].present?
-      unless (GlobalSetting.try(:saml_validate_email_fields).split("|").map(&:downcase) & attributes['memberOf'].map(&:downcase)).empty?
+    # XXX quick hack to test things, use groups instead of memberOf here
+    if GlobalSetting.try(:saml_validate_email_fields).present? && attributes['groups'].present?
+      log("#{name}_auth: saml_validate_email_fields set and groups present")
+      unless (GlobalSetting.try(:saml_validate_email_fields).split("|").map(&:downcase) & attributes['groups'].map(&:downcase)).empty?
+        log("#{name}_auth: group matched, account is valid")
         result.email_valid = true
       else
+        log("#{name}_auth: group not matched, account not valid")
         result.email_valid = false
       end
     elsif GlobalSetting.respond_to?(:saml_default_emails_valid) && !GlobalSetting.saml_default_emails_valid.nil?
